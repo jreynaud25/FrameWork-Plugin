@@ -1,6 +1,7 @@
 //const BACKENDURL = "http://localhost:3000/api/figma";
 const BACKENDURL = "https://framework-backend.fly.dev/api";
 //The first function called
+//Bonjoru un commentaire
 
 //Function to make API call to check if there is any change
 const makeAPIcall = async (): Promise<void> => {

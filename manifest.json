@@ -1,0 +1,16 @@
+{
+  "name": "FrameWork",
+  "id": "1301503752675940000",
+  "api": "1.0.0",
+  "main": "code.js",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": ["*"],
+    "reasoning": "Dev phase",
+    "devAllowedDomains": ["http://localhost:3000"]
+  },
+  "ui": "ui.html",
+  "enablePrivatePluginApi": true
+}

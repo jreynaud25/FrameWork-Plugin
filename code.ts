@@ -67,8 +67,8 @@ const findImgAndReplace = (imgURL): void => {
     // Create a rectangle that's the same dimensions as the image.
     // const node = figma.createRectangle();
 
-    const { width, height } = await image.getSizeAsync();
-    node.resize(width, height);
+    // const { width, height } = await image.getSizeAsync();
+    // node.resize(width, height);
 
     //  Render the image by filling the rectangle.
     node.fills = [
@@ -103,7 +103,7 @@ const retrieveClient = async (): Promise<void> => {
       ];
       console.log("🛠️Enjoy !🛠️");
 
-      figma.showUI(__html__, { width: 400, height: 400, title: "Framework" });
+      figma.showUI(__html__, { width: 400, height: 600, title: "Framework" });
       figma.ui.postMessage(datas);
       figma.ui.onmessage = (msg) => {
         if (msg.type === "create-framework") {

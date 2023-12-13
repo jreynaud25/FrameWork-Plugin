@@ -8,8 +8,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-//const BACKENDURL = "http://localhost:3000/api/figma";
-const BACKENDURL = "https://framework-backend.fly.dev/api";
+const BACKENDURL = "http://localhost:3000/api/";
+//const BACKENDURL = "https://framework-backend.fly.dev/api";
 //The first function called
 //Bonjoru un commentaire
 //Function to make API call to check if there is any change

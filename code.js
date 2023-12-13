@@ -14,15 +14,27 @@ const BACKENDURL = "https://framework-backend.fly.dev/api";
 //Bonjoru un commentaire
 //Function to make API call to check if there is any change
 const makeAPIcall = () => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield fetch(`${BACKENDURL}/figma/${figma.fileKey}/change`);
-    const design = yield response.json();
-    if (design.asChanged) {
-        console.log("Change detected !", design);
-        makeChangement(design);
-        //findImgAndReplace();
+    try {
+        const response = yield fetch(`${BACKENDURL}/figma/${figma.fileKey}/change`);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch data. Status code: ${response.status}`);
+        }
+        const design = yield response.json();
+        if (design.asChanged) {
+            console.log("Change detected !", design);
+            yield makeChangement(design);
+        }
+        else {
+            console.log("No change...", design);
+            setTimeout(makeAPIcall, 1000);
+        }
     }
-    else {
-        console.log("No change...", design);
+    catch (error) {
+        console.error("An error occurred while making the API call:", error);
+        setTimeout(makeAPIcall, 1000); // Retry after a delay in case of an error
+    }
+    finally {
+        // Ensure that makeAPIcall is always called, even if an error occurs
         setTimeout(makeAPIcall, 1000);
     }
 });

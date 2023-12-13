@@ -23,7 +23,6 @@ const makeAPIcall = async (): Promise<void> => {
     }
   } catch (error) {
     console.error("An error occurred while making the API call:", error);
-    setTimeout(makeAPIcall, 1000); // Retry after a delay in case of an error
   } finally {
     // Ensure that makeAPIcall is always called, even if an error occurs
     setTimeout(makeAPIcall, 1000);

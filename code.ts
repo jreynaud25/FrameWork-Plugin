@@ -19,7 +19,6 @@ const makeAPIcall = async (): Promise<void> => {
       await makeChangement(design);
     } else {
       console.log("No change...", design);
-      setTimeout(makeAPIcall, 1000);
     }
   } catch (error) {
     console.error("An error occurred while making the API call:", error);

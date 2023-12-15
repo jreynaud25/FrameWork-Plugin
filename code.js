@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 const BACKENDURL = "http://localhost:3000/api/";
 //const BACKENDURL = "https://framework-backend.fly.dev/api";
 //The first function called
-//Bonjoru un commentaire
 //Function to make API call to check if there is any change
 const makeAPIcall = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -25,7 +24,7 @@ const makeAPIcall = () => __awaiter(void 0, void 0, void 0, function* () {
             yield makeChangement(design);
         }
         else {
-            console.log("No change...", design);
+            // console.log("No change...", design);
         }
     }
     catch (error) {
@@ -93,9 +92,14 @@ const retrieveClient = () => __awaiter(void 0, void 0, void 0, function* () {
         const datas = [
             figma.root.name,
             figma.fileKey,
-            currentPage.id,
-            currentPage.children,
+            figma.currentPage.id,
+            figma.currentPage.children,
+            figma.currentPage.findAll((frame) => frame.type === "FRAME"),
+            figma.currentPage.findAll((section) => section.type === "SECTION"),
             figma.variables.getLocalVariables("STRING").length,
+            figma.variables.getLocalVariables("COLOR"),
+            figma.variables.getLocalVariables("BOOLEAN"),
+            figma.variables.getLocalVariables("FLOAT"),
             clientList,
         ];
         console.log("🛠️Enjoy !🛠️");
@@ -108,14 +112,104 @@ const retrieveClient = () => __awaiter(void 0, void 0, void 0, function* () {
         };
     });
 });
+const retrieveAllDatas = () => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("Retrieving datas");
+    let datas = []; // Initialize an empty array to store data
+    datas.push({ FigmaName: figma.root.name });
+    datas.push({ FigmaFileKey: figma.fileKey });
+    datas.push({ FigmaId: figma.currentPage.id });
+    const sections = figma.currentPage.findAll((section) => section.type === "SECTION");
+    console.log("bonjour les sections", sections, typeof sections);
+    sections.forEach((section) => {
+        const sectionData = {
+            type: "SECTION",
+            name: section.name,
+            id: section.id,
+            frames: [], // Initialize an empty array to store frames within the section
+        };
+        const frames = section.children;
+        frames.forEach((frame) => {
+            const frameData = {
+                type: "FRAME",
+                sectionName: section.name,
+                frameName: frame.name,
+                frameId: frame.id,
+            };
+            sectionData.frames.push(frameData); // Push frame data into the section's frames array
+        });
+        datas.push(sectionData); // Push section data into the datas array
+    });
+    const images = figma.currentPage.findAll((image) => image.name.includes("EditImg"));
+    images.forEach((image) => {
+        const imageData = {
+            type: "IMAGE",
+            name: image.name,
+            id: image.id,
+        };
+        datas.push(imageData); // Push image data into the datas array
+    });
+    const textVariables = figma.variables.getLocalVariables("STRING");
+    textVariables.forEach((text) => {
+        const textData = {
+            type: "TEXT",
+            name: text.name,
+            valuesByMode: text.valuesByMode,
+            id: text.id,
+        };
+        datas.push(textData); // Push text data into the datas array
+    });
+    const floatVariables = figma.variables.getLocalVariables("FLOAT");
+    floatVariables.forEach((float) => {
+        const floatData = {
+            type: "FLOAT",
+            name: float.name,
+            valuesByMode: float.valuesByMode,
+            id: float.id,
+        };
+        datas.push(floatData); // Push float data into the datas array
+    });
+    const colorVariables = figma.variables.getLocalVariables("COLOR");
+    colorVariables.forEach((color) => {
+        const colorData = {
+            type: "COLOR",
+            name: color.name,
+            valuesByMode: color.valuesByMode,
+            id: color.id,
+        };
+        datas.push(colorData); // Push color data into the datas array
+    });
+    const boolVariables = figma.variables.getLocalVariables("BOOLEAN");
+    boolVariables.forEach((bool) => {
+        const boolData = {
+            type: "BOOLEAN",
+            name: bool.name,
+            valuesByMode: bool.valuesByMode,
+            id: bool.id,
+        };
+        datas.push(boolData); // Push bool data into the datas array
+    });
+    // Now, datas array contains all the collected data
+    console.log("All data:", datas);
+    try {
+        console.log("Bonjour jenvoi un fetch");
+        const response = yield fetch(`${BACKENDURL}/figma/create`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                // 'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: JSON.stringify(datas),
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch data. Status code: ${response.status}`);
+        }
+    }
+    catch (error) {
+        console.log(error);
+    }
+});
+// Call the function to retrieve and store data
+retrieveAllDatas();
 console.log("🛠️ Starting the plugin 🛠️");
-const currentPage = figma.currentPage;
-console.log("Here are the information you have to provide to the Framework Front-end ", currentPage);
-console.log("Figma Id", figma.fileKey);
-console.log("Figma Node Id", currentPage.id);
-console.log("Figma Image Node ", currentPage.children);
-console.log("Number of variables", figma.variables.getLocalVariables("STRING").length);
-makeAPIcall();
-retrieveClient();
-//figma.currentPage.selection = nodes;
-//figma.viewport.scrollAndZoomIntoView(nodes);
+//makeAPIcall();
+//retrieveClient();

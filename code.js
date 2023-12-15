@@ -112,6 +112,22 @@ const retrieveClient = () => __awaiter(void 0, void 0, void 0, function* () {
         };
     });
 });
+function settingNonVisibleEmptyText() {
+    console.log("Hello le setting visible");
+    const texts = figma.currentPage.findAll((text) => text.type === "TEXT");
+    texts.map((text) => {
+        console.log("Displaying informations : ", text);
+        console.log("Name :", text.name, "characteres : ", text.characters, " visible ", text.visible, " id ", text.id, "vairable ", text.boundVariables);
+        if (text.characters === " " || text.characters === "") {
+            console.log("Be careful, is empty, should make it unvisible");
+            text.visible = false;
+        }
+        else {
+            text.visible = true;
+        }
+    });
+    console.log(texts);
+}
 const retrieveAllDatas = () => __awaiter(void 0, void 0, void 0, function* () {
     console.log("Retrieving datas");
     let datas = []; // Initialize an empty array to store data
@@ -209,7 +225,8 @@ const retrieveAllDatas = () => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 // Call the function to retrieve and store data
-retrieveAllDatas();
+//retrieveAllDatas();
+settingNonVisibleEmptyText();
 console.log("🛠️ Starting the plugin 🛠️");
 //makeAPIcall();
 //retrieveClient();

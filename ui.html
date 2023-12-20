@@ -87,10 +87,11 @@
   console.log("Bonjour à tous ");
   onmessage = (event) => {
     console.log("got this from the plugin code", event.data.pluginMessage);
-    document.getElementById("name").value = event.data.pluginMessage[0];
-    document.getElementById("id").value = event.data.pluginMessage[1];
-    document.getElementById("node").value = event.data.pluginMessage[2];
-    document.getElementById("count").value = event.data.pluginMessage[4];
+    console.log("file key", event.data.pluginMessage.FigmaFileKey);
+    document.getElementById("name").value = event.data.pluginMessage.FigmaName;
+    document.getElementById("id").value = event.data.pluginMessage.FigmaFileKey;
+    document.getElementById("node").value = event.data.pluginMessage.FigmaId;
+    document.getElementById("count").value = "10";
     event.data.pluginMessage[5].forEach((client) => {
       document.getElementById("client").add(new Option(client));
     });

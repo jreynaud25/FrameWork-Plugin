@@ -18,9 +18,10 @@ let datas = {
     sections: [],
     images: [],
     variables: [],
+    usedBy: {},
 };
 //Function to make API call to check if there is any change
-const makeAPIcall = () => __awaiter(void 0, void 0, void 0, function* () {
+const checkIfChanged = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const response = yield fetch(`${BACKENDURL}/figma/${figma.fileKey}/change`);
         if (!response.ok) {
@@ -33,15 +34,15 @@ const makeAPIcall = () => __awaiter(void 0, void 0, void 0, function* () {
             yield makeChangement(design);
         }
         else {
-            console.log("No change...", design);
+            // console.log("No change...", design);
         }
     }
     catch (error) {
         console.error("An error occurred while making the API call:", error);
     }
     finally {
-        // Ensure that makeAPIcall is always called, even if an error occurs
-        setTimeout(makeAPIcall, 1000);
+        // Ensure that checkIfChanged is always called, even if an error occurs
+        setTimeout(checkIfChanged, 1000);
     }
 });
 const makeChangement = (design) => __awaiter(void 0, void 0, void 0, function* () {
@@ -51,7 +52,7 @@ const makeChangement = (design) => __awaiter(void 0, void 0, void 0, function* (
     const response = yield fetch(`${BACKENDURL}/figma/${figma.fileKey}/changeApplied`, {
         method: "POST",
     }).then((res) => {
-        makeAPIcall();
+        checkIfChanged();
     });
 });
 //Function to edit variables. Working, but editing all vairable at once
@@ -69,49 +70,55 @@ const editVariables = (variables) => {
 // Function to edit a specific img
 const findImgAndReplace = (images) => {
     console.log("📸salut l'image 📸");
-    console.log("les images", images);
     images.map((image) => {
         console.log("Je loop sur les images", image);
-        const nodes = figma.currentPage.findAll((n) => n.name === image.name);
-        console.log("J'ai trouvé les nodes des images ", nodes);
-        figma.createImageAsync(image.url).then((image) => __awaiter(void 0, void 0, void 0, function* () {
-            console.log("Limage", image);
-            console.log("Jai toujours les nodes", nodes);
-            nodes.map((node) => {
-                console.log("Node par node", node);
-                node.fills = [
-                    {
-                        type: "IMAGE",
-                        imageHash: image.hash,
-                        scaleMode: "FILL",
-                    },
-                ];
-            });
-        }));
+        if (image.asChanged) {
+            const nodes = figma.currentPage.findAll((n) => n.name === image.name);
+            figma.createImageAsync(image.url).then((image) => __awaiter(void 0, void 0, void 0, function* () {
+                nodes.map((node) => {
+                    node.fills = [
+                        {
+                            type: "IMAGE",
+                            imageHash: image.hash,
+                            scaleMode: "FILL",
+                        },
+                    ];
+                });
+            }));
+        }
+        else {
+            console.log(image.name, " as not change");
+        }
     });
 };
 //Starting the plugin
-const retrieveClient = () => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("Finding the clients");
+const createUI = () => __awaiter(void 0, void 0, void 0, function* () {
     const response = yield fetch(`${BACKENDURL}/client`, {
         method: "GET",
     })
         .then((response) => response.json())
         .then((clientArray) => {
         let clientList = [];
-        clientArray.map((client) => clientList.push(client.username));
-        console.log("🛠️Enjoy !🛠️");
+        clientArray.map((client) => {
+            console.log(client);
+            clientList.push(client.username);
+        });
+        console.log("liste des clients", clientArray);
         figma.showUI(__html__, { width: 400, height: 600, title: "Framework" });
-        figma.ui.postMessage(datas);
+        figma.ui.postMessage(clientList);
         figma.ui.onmessage = (msg) => {
             if (msg.type === "create-framework") {
-                console.log("should create the framework using API");
-                createDesign();
+                const usedBy = clientArray.find((user) => user.username === msg.allValues[0]);
+                console.log("here is the used by ", usedBy);
+                createDesign(usedBy);
             }
         };
     });
+    console.log("🛠️Enjoy !🛠️");
 });
-const createDesign = () => __awaiter(void 0, void 0, void 0, function* () {
+const createDesign = (usedBy) => __awaiter(void 0, void 0, void 0, function* () {
+    datas.usedBy = usedBy;
+    console.log("bonjour les datas", datas);
     try {
         console.log("Bonjour jenvoi un fetch");
         const response = yield fetch(`${BACKENDURL}/figma/create`, {
@@ -181,6 +188,7 @@ const retrieveAllDatas = () => __awaiter(void 0, void 0, void 0, function* () {
         datas.sections.push(sectionData); // Push section data into the datas array
     });
     const images = figma.currentPage.findAll((image) => image.name.includes("EditImg"));
+    console.log("voilà les images que jai trouvé", images);
     images.forEach((image) => {
         const imageData = {
             type: "IMAGE",
@@ -237,5 +245,5 @@ const retrieveAllDatas = () => __awaiter(void 0, void 0, void 0, function* () {
 console.log("🛠️ Starting the plugin 🛠️");
 // Call the function to retrieve and store data
 retrieveAllDatas();
-makeAPIcall();
-retrieveClient();
+createUI();
+checkIfChanged();

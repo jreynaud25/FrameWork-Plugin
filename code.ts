@@ -39,7 +39,7 @@ const checkIfChanged = async (): Promise<void> => {
 
 const makeChangement = async (design): Promise<void> => {
   console.log("salut making the change", design);
-  //editVariables(design.variables);
+  editVariables(design.variables);
   findImgAndReplace(design.images);
 
   const response = await fetch(
@@ -63,8 +63,18 @@ const editVariables = (variables: Array<string>): void => {
   const localStringVariables = figma.variables.getLocalVariables("STRING"); // filters local variables by the 'STRING' type
 
   localStringVariables.map((e, index) => {
-    const newValue: VariableValue = textValues[index];
-    e.setValueForMode(localCollections[0].modes[0].modeId, newValue);
+    console.log("looping through var", e);
+    console.log("the Name", e.name);
+
+    variables.forEach((item) => {
+      if (item.name === e.name) {
+        console.log("Bonjour la value dans item ", item.valuesByMode);
+        console.log("Value dans e", e.valuesByMode);
+
+        const newValue: VariableValue = item.valuesByMode;
+        e.setValueForMode(localCollections[0].modes[0].modeId, newValue);
+      }
+    });
   });
 };
 
@@ -221,10 +231,11 @@ const retrieveAllDatas = async (): Promise<void> => {
 
   const textVariables = figma.variables.getLocalVariables("STRING");
   textVariables.forEach((text) => {
+    console.log("bonjour un text", text.valuesByMode["250:0"]);
     const textData = {
       type: "TEXT",
       name: text.name,
-      valuesByMode: text.valuesByMode,
+      valuesByMode: text.valuesByMode["250:0"],
       id: text.id,
     };
     datas.variables.push(textData); // Push text data into the datas array
@@ -232,11 +243,11 @@ const retrieveAllDatas = async (): Promise<void> => {
 
   const floatVariables = figma.variables.getLocalVariables("FLOAT");
   floatVariables.forEach((float) => {
-    console.log("salut la value", float.valuesByMode);
+    console.log("salut la value", float.valuesByMode["250:0"]);
     const floatData = {
       type: "FLOAT",
       name: float.name,
-      valuesByMode: float.valuesByMode,
+      valuesByMode: float.valuesByMode["250:0"],
       id: float.id,
     };
     datas.variables.push(floatData); // Push float data into the datas array
@@ -247,7 +258,7 @@ const retrieveAllDatas = async (): Promise<void> => {
     const colorData = {
       type: "COLOR",
       name: color.name,
-      valuesByMode: color.valuesByMode,
+      valuesByMode: color.valuesByMode["250:0"],
       id: color.id,
     };
     datas.variables.push(colorData); // Push color data into the datas array
@@ -258,7 +269,7 @@ const retrieveAllDatas = async (): Promise<void> => {
     const boolData = {
       type: "BOOLEAN",
       name: bool.name,
-      valuesByMode: bool.valuesByMode,
+      valuesByMode: bool.valuesByMode["250:0"],
       id: bool.id,
     };
     datas.variables.push(boolData); // Push bool data into the datas array

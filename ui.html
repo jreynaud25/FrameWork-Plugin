@@ -1,16 +1,16 @@
 <h2>Framework Creator</h2>
-<p>Name: <input id="name" value="" /></p>
+<!-- <p>Name: <input id="name" value="" /></p>
 <p>ID: <input id="id" value="" /></p>
 <p>Node: <input id="node" value="" /></p>
-<p>Count: <input id="count" value="" /></p>
+<p>Count: <input id="count" value="" /></p> -->
 <p>
   Client:
   <select id="client" value=""></select>
 </p>
 <button id="create">Create</button>
+<button id="Update">Update</button>
 <head>
   <style media="screen">
-
     body {
       /* background-color: #080710; */
       background-color: rgba(255, 255, 255, 0.13);
@@ -86,23 +86,22 @@
 <script>
   console.log("Bonjour à tous ");
   onmessage = (event) => {
-    console.log("got this from the plugin code", event.data.pluginMessage);
-    document.getElementById("name").value = event.data.pluginMessage[0];
-    document.getElementById("id").value = event.data.pluginMessage[1];
-    document.getElementById("node").value = event.data.pluginMessage[2];
-    document.getElementById("count").value = event.data.pluginMessage[4];
-    event.data.pluginMessage[5].forEach((client) => {
+    //console.log("Data for code.ts", event.data.pluginMessage);
+    // document.getElementById("name").value = event.data.pluginMessage.FigmaName;
+    // document.getElementById("id").value = event.data.pluginMessage.FigmaFileKey;
+    // document.getElementById("node").value = event.data.pluginMessage.FigmaId;
+    // document.getElementById("count").value = "10";
+    event.data.pluginMessage.forEach((client) => {
       document.getElementById("client").add(new Option(client));
     });
   };
 
   document.getElementById("create").onclick = () => {
-    console.log("Collecting values");
     const allValues = [
-      document.getElementById("name").value,
-      document.getElementById("id").value,
-      document.getElementById("node").value,
-      document.getElementById("count").value,
+      // document.getElementById("name").value,
+      // document.getElementById("id").value,
+      // document.getElementById("node").value,
+      // document.getElementById("count").value,
       document.getElementById("client").value,
     ];
 

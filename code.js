@@ -8,12 +8,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-//const BACKENDURL = "http://localhost:3000/api/figma";
-const BACKENDURL = "https://framework-backend.fly.dev/api";
+const BACKENDURL = "http://localhost:3000/api/";
+//const BACKENDURL = "https://framework-backend.fly.dev/api";
 //The first function called
-//Bonjoru un commentaire
+let datas = {
+    FigmaName: figma.root.name,
+    FigmaFileKey: figma.fileKey,
+    FigmaId: figma.currentPage.id,
+    sections: [],
+    images: [],
+    variables: [],
+    usedBy: {},
+};
 //Function to make API call to check if there is any change
-const makeAPIcall = () => __awaiter(void 0, void 0, void 0, function* () {
+const checkIfChanged = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const response = yield fetch(`${BACKENDURL}/figma/${figma.fileKey}/change`);
         if (!response.ok) {
@@ -21,101 +29,230 @@ const makeAPIcall = () => __awaiter(void 0, void 0, void 0, function* () {
         }
         const design = yield response.json();
         if (design.asChanged) {
+            //if (true) {
             console.log("Change detected !", design);
             yield makeChangement(design);
         }
         else {
-            console.log("No change...", design);
+            // console.log("No change...", design);
         }
     }
     catch (error) {
         console.error("An error occurred while making the API call:", error);
     }
     finally {
-        // Ensure that makeAPIcall is always called, even if an error occurs
-        setTimeout(makeAPIcall, 1000);
+        // Ensure that checkIfChanged is always called, even if an error occurs
+        setTimeout(checkIfChanged, 1000);
     }
 });
 const makeChangement = (design) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("salut making the change", design);
-    editVariables(design.textValues);
-    findImgAndReplace(design.picture);
+    editVariables(design.variables);
+    findImgAndReplace(design.images);
     const response = yield fetch(`${BACKENDURL}/figma/${figma.fileKey}/changeApplied`, {
         method: "POST",
     }).then((res) => {
-        makeAPIcall();
+        checkIfChanged();
     });
 });
 //Function to edit variables. Working, but editing all vairable at once
-const editVariables = (textValues) => {
+const editVariables = (variables) => {
     const localCollections = figma.variables.getLocalVariableCollections();
-    console.log(localCollections);
-    console.log(localCollections[0].modes[0].modeId);
+    console.log("gettings variables", variables);
+    //  console.log(localCollections[0].modes[0].modeId);
     //figma.closePlugin();
-    const localVariables = figma.variables.getLocalVariables("STRING"); // filters local variables by the 'STRING' type
-    console.log("local variables", localVariables, "and the text Values", textValues);
-    localVariables.map((e, index) => {
-        console.log("salut index", index);
-        console.log("Name", e.name, "and the value", "Value", e.valuesByMode);
-        const newValue = textValues[index];
-        e.setValueForMode(localCollections[0].modes[0].modeId, newValue);
+    const localStringVariables = figma.variables.getLocalVariables("STRING"); // filters local variables by the 'STRING' type
+    localStringVariables.map((e, index) => {
+        console.log("looping through var", e);
+        console.log("the Name", e.name);
+        variables.forEach((item) => {
+            if (item.name === e.name) {
+                console.log("Bonjour la value dans item ", item.valuesByMode);
+                console.log("Value dans e", e.valuesByMode);
+                const newValue = item.valuesByMode;
+                e.setValueForMode(localCollections[0].modes[0].modeId, newValue);
+            }
+        });
     });
 };
 // Function to edit a specific img
-const findImgAndReplace = (imgURL) => {
+const findImgAndReplace = (images) => {
     console.log("📸salut l'image 📸");
-    const node = figma.currentPage.findOne((n) => n.name === "img3");
-    figma.createImageAsync(imgURL).then((image) => __awaiter(void 0, void 0, void 0, function* () {
-        // Create a rectangle that's the same dimensions as the image.
-        // const node = figma.createRectangle();
-        // const { width, height } = await image.getSizeAsync();
-        // node.resize(width, height);
-        //  Render the image by filling the rectangle.
-        node.fills = [
-            {
-                type: "IMAGE",
-                imageHash: image.hash,
-                scaleMode: "FILL",
-            },
-        ];
-    }));
+    images.map((image) => {
+        console.log("Je loop sur les images", image);
+        if (image.asChanged) {
+            const nodes = figma.currentPage.findAll((n) => n.name === image.name);
+            figma.createImageAsync(image.url).then((image) => __awaiter(void 0, void 0, void 0, function* () {
+                nodes.map((node) => {
+                    node.fills = [
+                        {
+                            type: "IMAGE",
+                            imageHash: image.hash,
+                            scaleMode: "FILL",
+                        },
+                    ];
+                });
+            }));
+        }
+        else {
+            console.log(image.name, " as not change");
+        }
+    });
 };
 //Starting the plugin
-const retrieveClient = () => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("salut making the change");
+const createUI = () => __awaiter(void 0, void 0, void 0, function* () {
     const response = yield fetch(`${BACKENDURL}/client`, {
         method: "GET",
     })
         .then((response) => response.json())
         .then((clientArray) => {
         let clientList = [];
-        clientArray.map((client) => clientList.push(client.username));
-        const datas = [
-            figma.root.name,
-            figma.fileKey,
-            currentPage.id,
-            currentPage.children,
-            figma.variables.getLocalVariables("STRING").length,
-            clientList,
-        ];
-        console.log("🛠️Enjoy !🛠️");
+        clientArray.map((client) => {
+            console.log(client);
+            clientList.push(client.username);
+        });
+        console.log("liste des clients", clientArray);
         figma.showUI(__html__, { width: 400, height: 600, title: "Framework" });
-        figma.ui.postMessage(datas);
+        figma.ui.postMessage(clientList);
         figma.ui.onmessage = (msg) => {
             if (msg.type === "create-framework") {
-                console.log("should create the framework using API");
+                const usedBy = clientArray.find((user) => user.username === msg.allValues[0]);
+                console.log("here is the used by ", usedBy);
+                createDesign(usedBy);
             }
         };
     });
+    console.log("🛠️Enjoy !🛠️");
 });
+const createDesign = (usedBy) => __awaiter(void 0, void 0, void 0, function* () {
+    datas.usedBy = usedBy;
+    console.log("bonjour les datas", datas);
+    try {
+        console.log("Bonjour jenvoi un fetch");
+        const response = yield fetch(`${BACKENDURL}/figma/create`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                // 'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: JSON.stringify(datas),
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch data. Status code: ${response.status}`);
+        }
+    }
+    catch (error) {
+        console.log(error);
+    }
+});
+function settingNonVisibleEmptyText() {
+    console.log("Hello le setting visible");
+    const texts = figma.currentPage.findAll((text) => text.type === "TEXT");
+    texts.map((text) => {
+        // console.log("Displaying informations : ", text);
+        // console.log(
+        //   "Name :",
+        //   text.name,
+        //   "characteres : ",
+        //   text.characters,
+        //   " visible ",
+        //   text.visible,
+        //   " id ",
+        //   text.id,
+        //   "vairable ",
+        //   text.boundVariables
+        // );
+        if (text.characters === " " || text.characters === "") {
+            console.log("Be careful, is empty, should make it unvisible");
+            text.visible = false;
+        }
+        else {
+            text.visible = true;
+        }
+    });
+    console.log(texts);
+}
+const retrieveAllDatas = () => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("Retrieving datas");
+    const sections = figma.currentPage.findAll((section) => section.type === "SECTION");
+    // console.log("bonjour les sections", sections, typeof sections);
+    sections.forEach((section) => {
+        const sectionData = {
+            type: "SECTION",
+            name: section.name,
+            id: section.id,
+            frames: [], // Initialize an empty array to store frames within the section
+        };
+        const frames = section.children;
+        frames.forEach((frame) => {
+            const frameData = {
+                type: "FRAME",
+                sectionName: section.name,
+                frameName: frame.name,
+                frameId: frame.id,
+            };
+            sectionData.frames.push(frameData); // Push frame data into the section's frames array
+        });
+        datas.sections.push(sectionData); // Push section data into the datas array
+    });
+    const images = figma.currentPage.findAll((image) => image.name.includes("EditImg"));
+    console.log("voilà les images que jai trouvé", images);
+    images.forEach((image) => {
+        const imageData = {
+            type: "IMAGE",
+            name: image.name,
+            id: image.id,
+        };
+        datas.images.push(imageData); // Push image data into the datas array
+    });
+    const textVariables = figma.variables.getLocalVariables("STRING");
+    textVariables.forEach((text) => {
+        console.log("bonjour un text", text.valuesByMode["250:0"]);
+        const textData = {
+            type: "TEXT",
+            name: text.name,
+            valuesByMode: text.valuesByMode["250:0"],
+            id: text.id,
+        };
+        datas.variables.push(textData); // Push text data into the datas array
+    });
+    const floatVariables = figma.variables.getLocalVariables("FLOAT");
+    floatVariables.forEach((float) => {
+        console.log("salut la value", float.valuesByMode["250:0"]);
+        const floatData = {
+            type: "FLOAT",
+            name: float.name,
+            valuesByMode: float.valuesByMode["250:0"],
+            id: float.id,
+        };
+        datas.variables.push(floatData); // Push float data into the datas array
+    });
+    const colorVariables = figma.variables.getLocalVariables("COLOR");
+    colorVariables.forEach((color) => {
+        const colorData = {
+            type: "COLOR",
+            name: color.name,
+            valuesByMode: color.valuesByMode["250:0"],
+            id: color.id,
+        };
+        datas.variables.push(colorData); // Push color data into the datas array
+    });
+    const boolVariables = figma.variables.getLocalVariables("BOOLEAN");
+    boolVariables.forEach((bool) => {
+        const boolData = {
+            type: "BOOLEAN",
+            name: bool.name,
+            valuesByMode: bool.valuesByMode["250:0"],
+            id: bool.id,
+        };
+        datas.variables.push(boolData); // Push bool data into the datas array
+    });
+    // Now, datas array contains all the collected data
+    console.log("All data:", datas);
+});
+//settingNonVisibleEmptyText();
 console.log("🛠️ Starting the plugin 🛠️");
-const currentPage = figma.currentPage;
-console.log("Here are the information you have to provide to the Framework Front-end ", currentPage);
-console.log("Figma Id", figma.fileKey);
-console.log("Figma Node Id", currentPage.id);
-console.log("Figma Image Node ", currentPage.children);
-console.log("Number of variables", figma.variables.getLocalVariables("STRING").length);
-makeAPIcall();
-retrieveClient();
-//figma.currentPage.selection = nodes;
-//figma.viewport.scrollAndZoomIntoView(nodes);
+// Call the function to retrieve and store data
+retrieveAllDatas();
+createUI();
+checkIfChanged();

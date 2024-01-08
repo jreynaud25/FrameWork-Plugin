@@ -1,6 +1,5 @@
-const BACKENDURL = "http://localhost:3000/api/";
+const BACKENDURL = "http://localhost:3000/api";
 //const BACKENDURL = "https://framework-backend.fly.dev/api";
-//The first function called
 let datas = {
   FigmaName: figma.root.name,
   FigmaFileKey: figma.fileKey,
@@ -11,44 +10,97 @@ let datas = {
   usedBy: {},
 };
 
+let pollTimeoutId: number | undefined;
 //Function to make API call to check if there is any change
-const checkIfChanged = async (): Promise<void> => {
+const POLL_INTERVAL = 1000; // Configurable polling interval
+
+let changeDesignStatus;
+interface Design {
+  asChanged: boolean;
+  // Add other properties of 'design' object here if needed
+}
+
+const fetchDesignChange = async (): Promise<Design> => {
   try {
-    const response = await fetch(`${BACKENDURL}/figma/${figma.fileKey}/change`);
+    changeDesignStatus = await fetch(
+      `${BACKENDURL}/figma/${datas.FigmaFileKey}/change`
+    );
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch data. Status code: ${response.status}`);
+    if (!changeDesignStatus.ok) {
+      // Check for error status codes (e.g., 404, 500)
+      console.error(
+        "Error response from server:",
+        changeDesignStatus.status,
+        changeDesignStatus.statusText
+      );
+      throw new Error(
+        `Failed to fetch design change. Server returned status ${changeDesignStatus.status}`
+      );
     }
 
-    const design = await response.json();
-
-    if (design.asChanged) {
-      //if (true) {
-      console.log("Change detected !", design);
-      await makeChangement(design);
-    } else {
-      // console.log("No change...", design);
-    }
+    const responseData = await changeDesignStatus.json();
+    return responseData;
   } catch (error) {
-    console.error("An error occurred while making the API call:", error);
-  } finally {
-    // Ensure that checkIfChanged is always called, even if an error occurs
-    setTimeout(checkIfChanged, 1000);
+    console.error(
+      "An error occurred during fetchDesignChange:",
+      error.message || error
+    );
+    throw new Error("Failed to fetch design change.");
   }
 };
 
+const processDesignChange = async (design: Design): Promise<void> => {
+  try {
+    if (design.asChanged) {
+      console.log("Change detected!", design);
+      await makeChangement(design);
+    }
+  } catch (error) {
+    console.error("An error occurred during processDesignChange:", error);
+    await fetch(`${BACKENDURL}/figma/error`);
+    throw new Error("Failed to process design change.");
+  }
+};
+
+const checkIfChanged = async (): Promise<void> => {
+  //console.log("Checking if design has changed");
+  try {
+    const design = await fetchDesignChange();
+    await processDesignChange(design);
+  } catch (error) {
+    await fetch(`${BACKENDURL}/figma/error`);
+    console.error("An error occurred while making the API call:", error);
+  } finally {
+    if (datas.FigmaFileKey) {
+      pollTimeoutId = setTimeout(checkIfChanged, POLL_INTERVAL);
+    }
+  }
+};
+
+const clearPollTimeout = (): void => {
+  try {
+    if (pollTimeoutId !== undefined) {
+      clearTimeout(pollTimeoutId);
+      pollTimeoutId = undefined;
+    }
+  } catch (error) {
+    console.error("An error occurred during clearPollTimeout:", error);
+  }
+};
 const makeChangement = async (design): Promise<void> => {
   console.log("salut making the change", design);
   editVariables(design.variables);
   findImgAndReplace(design.images);
+  settingNonVisibleEmptyText();
 
   const response = await fetch(
-    `${BACKENDURL}/figma/${figma.fileKey}/changeApplied`,
+    `${BACKENDURL}/figma/${datas.FigmaFileKey}/changeApplied`,
     {
       method: "POST",
     }
   ).then((res) => {
-    checkIfChanged();
+    //checkIfChanged();
+    return;
   });
 };
 
@@ -107,6 +159,7 @@ const findImgAndReplace = (images): void => {
 //Starting the plugin
 
 const createUI = async (): Promise<void> => {
+  console.log("Creating the UI and fetching client");
   const response = await fetch(`${BACKENDURL}/client`, {
     method: "GET",
   })
@@ -114,10 +167,10 @@ const createUI = async (): Promise<void> => {
     .then((clientArray) => {
       let clientList: Array<Client> = [];
       clientArray.map((client: any) => {
-        console.log(client);
+        // console.log(client);
         clientList.push(client.username);
       });
-      console.log("liste des clients", clientArray);
+      //console.log("liste des clients", clientArray);
       figma.showUI(__html__, { width: 400, height: 600, title: "Framework" });
       figma.ui.postMessage(clientList);
       figma.ui.onmessage = (msg) => {
@@ -131,16 +184,14 @@ const createUI = async (): Promise<void> => {
         }
       };
     });
-
-  console.log("🛠️Enjoy !🛠️");
 };
 
 const createDesign = async (usedBy) => {
   datas.usedBy = usedBy;
 
-  console.log("bonjour les datas", datas);
+  //  console.log("bonjour les datas", datas);
   try {
-    console.log("Bonjour jenvoi un fetch");
+    //  console.log("Bonjour jenvoi un fetch");
     const response = await fetch(`${BACKENDURL}/figma/create`, {
       method: "POST",
       headers: {
@@ -162,20 +213,6 @@ function settingNonVisibleEmptyText() {
 
   const texts = figma.currentPage.findAll((text) => text.type === "TEXT");
   texts.map((text) => {
-    // console.log("Displaying informations : ", text);
-    // console.log(
-    //   "Name :",
-    //   text.name,
-    //   "characteres : ",
-    //   text.characters,
-    //   " visible ",
-    //   text.visible,
-    //   " id ",
-    //   text.id,
-    //   "vairable ",
-    //   text.boundVariables
-    // );
-
     if (text.characters === " " || text.characters === "") {
       console.log("Be careful, is empty, should make it unvisible");
       text.visible = false;
@@ -219,7 +256,7 @@ const retrieveAllDatas = async (): Promise<void> => {
     image.name.includes("EditImg")
   );
 
-  console.log("voilà les images que jai trouvé", images);
+  //console.log("voilà les images que jai trouvé", images);
   images.forEach((image) => {
     const imageData = {
       type: "IMAGE",
@@ -231,7 +268,7 @@ const retrieveAllDatas = async (): Promise<void> => {
 
   const textVariables = figma.variables.getLocalVariables("STRING");
   textVariables.forEach((text) => {
-    console.log("bonjour un text", text.valuesByMode["250:0"]);
+    //console.log("bonjour un text", text.valuesByMode["250:0"]);
     const textData = {
       type: "TEXT",
       name: text.name,
@@ -243,7 +280,7 @@ const retrieveAllDatas = async (): Promise<void> => {
 
   const floatVariables = figma.variables.getLocalVariables("FLOAT");
   floatVariables.forEach((float) => {
-    console.log("salut la value", float.valuesByMode["250:0"]);
+    //console.log("salut la value", float.valuesByMode["250:0"]);
     const floatData = {
       type: "FLOAT",
       name: float.name,
@@ -276,10 +313,9 @@ const retrieveAllDatas = async (): Promise<void> => {
   });
 
   // Now, datas array contains all the collected data
-  console.log("All data:", datas);
+  // console.log("All data:", datas);
 };
 
-//settingNonVisibleEmptyText();
 console.log("🛠️ Starting the plugin 🛠️");
 // Call the function to retrieve and store data
 retrieveAllDatas();

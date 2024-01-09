@@ -240,6 +240,17 @@ function settingNonVisibleEmptyText() {
 
 const retrieveAllDatas = async (): Promise<void> => {
   console.log("Retrieving datas");
+
+  datas = {
+    FigmaName: figma.root.name,
+    FigmaFileKey: figma.fileKey,
+    FigmaId: figma.currentPage.id,
+    sections: [],
+    images: [],
+    variables: [],
+    usedBy: {},
+  };
+
   const sections = figma.currentPage.findAll(
     (section) => section.type === "SECTION"
   );

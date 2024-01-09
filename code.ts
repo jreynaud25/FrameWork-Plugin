@@ -1,5 +1,5 @@
-const BACKENDURL = "http://localhost:3000/api";
-//const BACKENDURL = "https://framework-backend.fly.dev/api";
+//const BACKENDURL = "http://localhost:3000/api";
+const BACKENDURL = "https://framework-backend.fly.dev/api";
 let datas = {
   FigmaName: figma.root.name,
   FigmaFileKey: figma.fileKey,
@@ -294,11 +294,16 @@ const retrieveAllDatas = async (): Promise<void> => {
 
   const textVariables = figma.variables.getLocalVariables("STRING");
   textVariables.forEach((text) => {
-    //console.log("bonjour un text", text.valuesByMode["250:0"]);
+    console.log(
+      "bonjour un text",
+      text.valuesByMode,
+      "but also",
+      Object.values(text.valuesByMode)[0]
+    );
     const textData = {
       type: "TEXT",
       name: text.name,
-      valuesByMode: text.valuesByMode["250:0"],
+      valuesByMode: Object.values(text.valuesByMode)[0],
       id: text.id,
     };
     datas.variables.push(textData); // Push text data into the datas array
@@ -310,7 +315,7 @@ const retrieveAllDatas = async (): Promise<void> => {
     const floatData = {
       type: "FLOAT",
       name: float.name,
-      valuesByMode: float.valuesByMode["250:0"],
+      valuesByMode: Object.values(float.valuesByMode)[0],
       id: float.id,
     };
     datas.variables.push(floatData); // Push float data into the datas array
@@ -321,7 +326,7 @@ const retrieveAllDatas = async (): Promise<void> => {
     const colorData = {
       type: "COLOR",
       name: color.name,
-      valuesByMode: color.valuesByMode["250:0"],
+      valuesByMode: Object.values(color.valuesByMode)[0],
       id: color.id,
     };
     datas.variables.push(colorData); // Push color data into the datas array
@@ -332,7 +337,7 @@ const retrieveAllDatas = async (): Promise<void> => {
     const boolData = {
       type: "BOOLEAN",
       name: bool.name,
-      valuesByMode: bool.valuesByMode["250:0"],
+      valuesByMode: Object.values(bool.valuesByMode)[0],
       id: bool.id,
     };
     datas.variables.push(boolData); // Push bool data into the datas array
@@ -344,6 +349,6 @@ const retrieveAllDatas = async (): Promise<void> => {
 
 console.log("🛠️ Starting the plugin 🛠️");
 // Call the function to retrieve and store data
-//retrieveAllDatas();
+retrieveAllDatas();
 createUI();
 checkIfChanged();

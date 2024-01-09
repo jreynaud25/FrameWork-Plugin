@@ -8,7 +8,7 @@
   <select id="client" value=""></select>
 </p>
 <button id="create">Create</button>
-<button id="Update">Update</button>
+<button id="update">Update</button>
 <head>
   <style media="screen">
     body {
@@ -109,6 +109,21 @@
     console.log(allValues);
     parent.postMessage(
       { pluginMessage: { type: "create-framework", allValues } },
+      "*"
+    );
+  };
+  document.getElementById("update").onclick = () => {
+    const allValues = [
+      // document.getElementById("name").value,
+      // document.getElementById("id").value,
+      // document.getElementById("node").value,
+      // document.getElementById("count").value,
+      document.getElementById("client").value,
+    ];
+
+    console.log(allValues);
+    parent.postMessage(
+      { pluginMessage: { type: "update-framework", allValues } },
       "*"
     );
   };

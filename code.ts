@@ -16,7 +16,7 @@ const POLL_INTERVAL = 1000; // Configurable polling interval
 
 let changeDesignStatus;
 interface Design {
-  asChanged: boolean;
+  hasChanged: boolean;
   // Add other properties of 'design' object here if needed
 }
 
@@ -51,7 +51,7 @@ const fetchDesignChange = async (): Promise<Design> => {
 
 const processDesignChange = async (design: Design): Promise<void> => {
   try {
-    if (design.asChanged) {
+    if (design.hasChanged) {
       console.log("Change detected!", design);
       await makeChangement(design);
     }
@@ -136,7 +136,7 @@ const findImgAndReplace = (images): void => {
   images.map((image) => {
     console.log("Je loop sur les images", image);
 
-    if (image.asChanged) {
+    if (image.hasChanged) {
       const nodes = figma.currentPage.findAll((n) => n.name === image.name);
 
       figma.createImageAsync(image.url).then(async (image: Image) => {
@@ -174,32 +174,46 @@ const createUI = async (): Promise<void> => {
       figma.showUI(__html__, { width: 400, height: 600, title: "Framework" });
       figma.ui.postMessage(clientList);
       figma.ui.onmessage = (msg) => {
-        if (msg.type === "create-framework") {
+        if (
+          msg.type === "create-framework" ||
+          msg.type === "update-framework"
+        ) {
           const usedBy = clientArray.find(
             (user) => user.username === msg.allValues[0]
           );
-
+          retrieveAllDatas();
           console.log("here is the used by ", usedBy);
-          createDesign(usedBy);
+          createOrUpdateDesign(usedBy, msg.type);
         }
       };
     });
 };
 
-const createDesign = async (usedBy) => {
+const createOrUpdateDesign = async (usedBy, msgType) => {
   datas.usedBy = usedBy;
 
   //  console.log("bonjour les datas", datas);
   try {
-    //  console.log("Bonjour jenvoi un fetch");
-    const response = await fetch(`${BACKENDURL}/figma/create`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // 'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: JSON.stringify(datas),
-    });
+    let response;
+    if (msgType === "create-framework") {
+      response = await fetch(`${BACKENDURL}/figma/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: JSON.stringify(datas),
+      });
+    } else if (msgType === "update-framework") {
+      response = await fetch(`${BACKENDURL}/figma/update`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: JSON.stringify(datas),
+      });
+    }
 
     if (!response.ok) {
       throw new Error(`Failed to fetch data. Status code: ${response.status}`);
@@ -208,6 +222,7 @@ const createDesign = async (usedBy) => {
     console.log(error);
   }
 };
+
 function settingNonVisibleEmptyText() {
   console.log("Hello le setting visible");
 
@@ -225,6 +240,17 @@ function settingNonVisibleEmptyText() {
 
 const retrieveAllDatas = async (): Promise<void> => {
   console.log("Retrieving datas");
+
+  datas = {
+    FigmaName: figma.root.name,
+    FigmaFileKey: figma.fileKey,
+    FigmaId: figma.currentPage.id,
+    sections: [],
+    images: [],
+    variables: [],
+    usedBy: {},
+  };
+
   const sections = figma.currentPage.findAll(
     (section) => section.type === "SECTION"
   );
@@ -318,6 +344,6 @@ const retrieveAllDatas = async (): Promise<void> => {
 
 console.log("🛠️ Starting the plugin 🛠️");
 // Call the function to retrieve and store data
-retrieveAllDatas();
+//retrieveAllDatas();
 createUI();
 checkIfChanged();

@@ -41,7 +41,7 @@ const fetchDesignChange = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 const processDesignChange = (design) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        if (design.asChanged) {
+        if (design.hasChanged) {
             console.log("Change detected!", design);
             yield makeChangement(design);
         }
@@ -116,7 +116,7 @@ const findImgAndReplace = (images) => {
     console.log("📸salut l'image 📸");
     images.map((image) => {
         console.log("Je loop sur les images", image);
-        if (image.asChanged) {
+        if (image.hasChanged) {
             const nodes = figma.currentPage.findAll((n) => n.name === image.name);
             figma.createImageAsync(image.url).then((image) => __awaiter(void 0, void 0, void 0, function* () {
                 nodes.map((node) => {
@@ -152,27 +152,41 @@ const createUI = () => __awaiter(void 0, void 0, void 0, function* () {
         figma.showUI(__html__, { width: 400, height: 600, title: "Framework" });
         figma.ui.postMessage(clientList);
         figma.ui.onmessage = (msg) => {
-            if (msg.type === "create-framework") {
+            if (msg.type === "create-framework" ||
+                msg.type === "update-framework") {
                 const usedBy = clientArray.find((user) => user.username === msg.allValues[0]);
+                retrieveAllDatas();
                 console.log("here is the used by ", usedBy);
-                createDesign(usedBy);
+                createOrUpdateDesign(usedBy, msg.type);
             }
         };
     });
 });
-const createDesign = (usedBy) => __awaiter(void 0, void 0, void 0, function* () {
+const createOrUpdateDesign = (usedBy, msgType) => __awaiter(void 0, void 0, void 0, function* () {
     datas.usedBy = usedBy;
     //  console.log("bonjour les datas", datas);
     try {
-        //  console.log("Bonjour jenvoi un fetch");
-        const response = yield fetch(`${BACKENDURL}/figma/create`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                // 'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: JSON.stringify(datas),
-        });
+        let response;
+        if (msgType === "create-framework") {
+            response = yield fetch(`${BACKENDURL}/figma/create`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    // 'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: JSON.stringify(datas),
+            });
+        }
+        else if (msgType === "update-framework") {
+            response = yield fetch(`${BACKENDURL}/figma/update`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    // 'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: JSON.stringify(datas),
+            });
+        }
         if (!response.ok) {
             throw new Error(`Failed to fetch data. Status code: ${response.status}`);
         }
@@ -197,6 +211,15 @@ function settingNonVisibleEmptyText() {
 }
 const retrieveAllDatas = () => __awaiter(void 0, void 0, void 0, function* () {
     console.log("Retrieving datas");
+    datas = {
+        FigmaName: figma.root.name,
+        FigmaFileKey: figma.fileKey,
+        FigmaId: figma.currentPage.id,
+        sections: [],
+        images: [],
+        variables: [],
+        usedBy: {},
+    };
     const sections = figma.currentPage.findAll((section) => section.type === "SECTION");
     // console.log("bonjour les sections", sections, typeof sections);
     sections.forEach((section) => {
@@ -275,6 +298,6 @@ const retrieveAllDatas = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 console.log("🛠️ Starting the plugin 🛠️");
 // Call the function to retrieve and store data
-retrieveAllDatas();
+//retrieveAllDatas();
 createUI();
 checkIfChanged();

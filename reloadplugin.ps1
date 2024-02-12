@@ -24,3 +24,31 @@ sleep 2
 
 #Because the loop end on the starting page of figma we have to change tab a last time
 [System.Windows.Forms.SendKeys]::SendWait('^{TAB}')
+
+
+
+
+
+#repeat 2 times
+repeat
+	tell application "Figma" to activate
+	tell application "System Events"
+		
+		#Code to switch tab
+		#key code 48 using control down
+		delay 13
+		#Code to restart plugin
+		key code 35 using {command down, option down}
+		delay 15
+	end tell
+	
+	#Command + Option + P
+end repeat
+
+#To change a last time the tab to go to the first project
+#tell application "System Events"
+#key code 48 using control down
+#delay 3
+
+
+#end tell

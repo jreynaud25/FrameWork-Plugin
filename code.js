@@ -149,7 +149,7 @@ const createUI = () => __awaiter(void 0, void 0, void 0, function* () {
             clientList.push(client.username);
         });
         //console.log("liste des clients", clientArray);
-        figma.showUI(__html__, { width: 400, height: 600, title: "Framework" });
+        figma.showUI(__html__, { width: 400, height: 400, title: "Framework" });
         figma.ui.postMessage(clientList);
         figma.ui.onmessage = (msg) => {
             if (msg.type === "create-framework" ||
@@ -158,6 +158,10 @@ const createUI = () => __awaiter(void 0, void 0, void 0, function* () {
                 retrieveAllDatas();
                 console.log("here is the used by ", usedBy);
                 createOrUpdateDesign(usedBy, msg.type);
+            }
+            else if (msg.type === "test") {
+                console.log("bouton test");
+                figma.ui.postMessage("Bonjour le message");
             }
         };
     });
@@ -176,6 +180,7 @@ const createOrUpdateDesign = (usedBy, msgType) => __awaiter(void 0, void 0, void
                 },
                 body: JSON.stringify(datas),
             });
+            figma.ui.postMessage("All good");
         }
         else if (msgType === "update-framework") {
             response = yield fetch(`${BACKENDURL}/figma/update`, {
@@ -186,9 +191,11 @@ const createOrUpdateDesign = (usedBy, msgType) => __awaiter(void 0, void 0, void
                 },
                 body: JSON.stringify(datas),
             });
+            figma.ui.postMessage("All good");
         }
         if (!response.ok) {
-            throw new Error(`Failed to fetch data. Status code: ${response.status}`);
+            figma.ui.postMessage(`Failed to create or update. Status code: ${response.status}`);
+            throw new Error(`Failed to create of update. Status code: ${response.status}`);
         }
     }
     catch (error) {

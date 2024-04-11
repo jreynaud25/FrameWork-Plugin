@@ -171,7 +171,7 @@ const createUI = async (): Promise<void> => {
         clientList.push(client.username);
       });
       //console.log("liste des clients", clientArray);
-      figma.showUI(__html__, { width: 400, height: 600, title: "Framework" });
+      figma.showUI(__html__, { width: 400, height: 400, title: "Framework" });
       figma.ui.postMessage(clientList);
       figma.ui.onmessage = (msg) => {
         if (
@@ -184,6 +184,9 @@ const createUI = async (): Promise<void> => {
           retrieveAllDatas();
           console.log("here is the used by ", usedBy);
           createOrUpdateDesign(usedBy, msg.type);
+        } else if (msg.type === "test") {
+          console.log("bouton test");
+          figma.ui.postMessage("Bonjour le message");
         }
       };
     });
@@ -204,6 +207,7 @@ const createOrUpdateDesign = async (usedBy, msgType) => {
         },
         body: JSON.stringify(datas),
       });
+      figma.ui.postMessage("All good");
     } else if (msgType === "update-framework") {
       response = await fetch(`${BACKENDURL}/figma/update`, {
         method: "POST",
@@ -213,10 +217,16 @@ const createOrUpdateDesign = async (usedBy, msgType) => {
         },
         body: JSON.stringify(datas),
       });
+      figma.ui.postMessage("All good");
     }
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch data. Status code: ${response.status}`);
+      figma.ui.postMessage(
+        `Failed to create or update. Status code: ${response.status}`
+      );
+      throw new Error(
+        `Failed to create of update. Status code: ${response.status}`
+      );
     }
   } catch (error) {
     console.log(error);

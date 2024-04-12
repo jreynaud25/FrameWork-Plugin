@@ -1,130 +1,80 @@
-<h2>Framework Creator</h2>
-<!-- <p>Name: <input id="name" value="" /></p>
-<p>ID: <input id="id" value="" /></p>
-<p>Node: <input id="node" value="" /></p>
-<p>Count: <input id="count" value="" /></p> -->
-<p>
-  Client:
-  <select id="client" value=""></select>
-</p>
-<button id="create">Create</button>
-<button id="update">Update</button>
-<head>
-  <style media="screen">
-    body {
-      /* background-color: #080710; */
-      background-color: rgba(255, 255, 255, 0.13);
-    }
-    .background {
-      width: 430px;
-      height: 520px;
-      position: absolute;
-      transform: translate(-50%, -50%);
-      left: 50%;
-      top: 50%;
-    }
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Framework Creator</title>
+    <style media="screen">
+      body {
+        /* background-color: #080710; */
+        background-color: rgba(255, 255, 255, 0.13);
+        font-family: "Poppins", sans-serif;
+      }
+      button {
+        padding: 8px 16px; /* Adjust padding as needed */
+        margin-bottom: 8px; /* Add margin between buttons */
+        padding: 0.5rem;
+        border: 0;
+        background-color: black;
+        color: white;
+        border-radius: 0.2rem;
+        text-align: left;
+      }
+      select {
+        font-size: 0.7rem;
+        font-family: plain;
+        padding: 0.25rem;
+        box-sizing: border-box;
+        border: 1px solid #a7a7a7;
+        border-radius: 0.25rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Framework Creator</h2>
+    <p>
+      Client:
+      <select id="client" value=""></select>
+    </p>
+    <button id="create">Create</button>
+    <button id="update">Update</button>
+    <!-- <button id="test">test</button> -->
+    <p id="info"></p>
+    <script>
+      console.log("Ui chargé ");
+      console.log("🛠️Enjoy !🛠️");
+      onmessage = (event) => {
+        if (typeof event.data.pluginMessage === "string") {
+          console.log("c'est une string");
+          document.getElementById("info").innerText = event.data.pluginMessage;
+        } else {
+          event.data.pluginMessage.forEach((client) => {
+            document.getElementById("client").add(new Option(client));
+          });
+        }
+      };
 
-    form {
-      height: 520px;
-      width: 400px;
-      /* background-color: rgba(255, 255, 255, 0.13); */
-      background-color: white;
-      position: absolute;
-      transform: translate(-50%, -50%);
-      top: 50%;
-      left: 50%;
-      border-radius: 10px;
-      backdrop-filter: blur(10px);
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 0 40px rgba(8, 7, 16, 0.6);
-      padding: 50px 35px;
-    }
-    form * {
-      font-family: "Poppins", sans-serif;
-      color: #ffffff;
-      letter-spacing: 0.5px;
-      outline: none;
-      border: none;
-    }
-    form h3 {
-      font-size: 32px;
-      font-weight: 500;
-      line-height: 42px;
-      text-align: center;
-    }
+      document.getElementById("create").onclick = () => {
+        const allValues = [document.getElementById("client").value];
 
-    label {
-      display: block;
-      margin-top: 30px;
-      font-size: 16px;
-      font-weight: 500;
-    }
-    input {
-      display: block;
-      height: 50px;
-      width: 100%;
-      background-color: rgba(255, 255, 255, 0.07);
-      border-radius: 3px;
-      padding: 0 10px;
-      margin-top: 8px;
-      font-size: 14px;
-      font-weight: 300;
-    }
+        console.log(allValues);
+        parent.postMessage(
+          { pluginMessage: { type: "create-framework", allValues } },
+          "*"
+        );
+      };
+      document.getElementById("update").onclick = () => {
+        const allValues = [document.getElementById("client").value];
 
-    button {
-      width: 100%;
-      background-color: #ffffff;
-      color: #080710;
-      padding: 15px 0;
-      font-size: 18px;
-      font-weight: 600;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<script>
-  console.log("Ui chargé ");
-  console.log("🛠️Enjoy !🛠️");
-  onmessage = (event) => {
-    //console.log("Data for code.ts", event.data.pluginMessage);
-    // document.getElementById("name").value = event.data.pluginMessage.FigmaName;
-    // document.getElementById("id").value = event.data.pluginMessage.FigmaFileKey;
-    // document.getElementById("node").value = event.data.pluginMessage.FigmaId;
-    // document.getElementById("count").value = "10";
-    event.data.pluginMessage.forEach((client) => {
-      document.getElementById("client").add(new Option(client));
-    });
-  };
-
-  document.getElementById("create").onclick = () => {
-    const allValues = [
-      // document.getElementById("name").value,
-      // document.getElementById("id").value,
-      // document.getElementById("node").value,
-      // document.getElementById("count").value,
-      document.getElementById("client").value,
-    ];
-
-    console.log(allValues);
-    parent.postMessage(
-      { pluginMessage: { type: "create-framework", allValues } },
-      "*"
-    );
-  };
-  document.getElementById("update").onclick = () => {
-    const allValues = [
-      // document.getElementById("name").value,
-      // document.getElementById("id").value,
-      // document.getElementById("node").value,
-      // document.getElementById("count").value,
-      document.getElementById("client").value,
-    ];
-
-    console.log(allValues);
-    parent.postMessage(
-      { pluginMessage: { type: "update-framework", allValues } },
-      "*"
-    );
-  };
-</script>
+        console.log(allValues);
+        parent.postMessage(
+          { pluginMessage: { type: "update-framework", allValues } },
+          "*"
+        );
+      };
+      document.getElementById("test").onclick = () => {
+        parent.postMessage({ pluginMessage: { type: "test" } }, "*");
+      };
+    </script>
+  </body>
+</html>

@@ -45,6 +45,9 @@ const processDesignChange = (design) => __awaiter(void 0, void 0, void 0, functi
             console.log("Change detected!", design);
             yield makeChangement(design);
         }
+        else {
+            console.log("No change detected");
+        }
     }
     catch (error) {
         console.error("An error occurred during processDesignChange:", error);
@@ -99,12 +102,12 @@ const editVariables = (variables) => {
     //figma.closePlugin();
     const localStringVariables = figma.variables.getLocalVariables("STRING"); // filters local variables by the 'STRING' type
     localStringVariables.map((e, index) => {
-        console.log("looping through var", e);
-        console.log("the Name", e.name);
+        // console.log("looping through var", e);
+        //console.log("the Name", e.name);
         variables.forEach((item) => {
             if (item.name === e.name) {
-                console.log("Bonjour la value dans item ", item.valuesByMode);
-                console.log("Value dans e", e.valuesByMode);
+                // console.log("Bonjour la value dans item ", item.valuesByMode);
+                //console.log("Value dans e", e.valuesByMode);
                 const newValue = item.valuesByMode;
                 e.setValueForMode(localCollections[0].modes[0].modeId, newValue);
             }
@@ -112,29 +115,38 @@ const editVariables = (variables) => {
     });
 };
 // Function to edit a specific img
-const findImgAndReplace = (images) => {
+const findImgAndReplace = (images) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("📸salut l'image 📸");
-    images.map((image) => {
-        console.log("Je loop sur les images", image);
+    for (const image of images) {
         if (image.hasChanged) {
+            console.log(image.name, "has changed");
+            console.log("Then I'll do something", image);
             const nodes = figma.currentPage.findAll((n) => n.name === image.name);
-            figma.createImageAsync(image.url).then((image) => __awaiter(void 0, void 0, void 0, function* () {
-                nodes.map((node) => {
+            console.log("I found the node", nodes);
+            try {
+                const img = yield figma.createImageAsync(image.url);
+                nodes.forEach((node) => {
                     node.fills = [
                         {
                             type: "IMAGE",
-                            imageHash: image.hash,
-                            scaleMode: "FILL",
+                            imageHash: img.hash,
+                            scaleMode: "FIT",
                         },
                     ];
                 });
-            }));
+            }
+            catch (error) {
+                console.error("Error creating image:", error);
+                if (error === "Image is too large") {
+                    console.log("image too large");
+                }
+            }
         }
         else {
-            console.log(image.name, " as not change");
+            console.log(image.name, " has not changed");
         }
-    });
-};
+    }
+});
 //Starting the plugin
 const createUI = () => __awaiter(void 0, void 0, void 0, function* () {
     console.log("Creating the UI and fetching client");
@@ -260,7 +272,12 @@ const retrieveAllDatas = () => __awaiter(void 0, void 0, void 0, function* () {
     });
     const textVariables = figma.variables.getLocalVariables("STRING");
     textVariables.forEach((text) => {
-        console.log("bonjour un text", text.valuesByMode, "but also", Object.values(text.valuesByMode)[0]);
+        // console.log(
+        //   "bonjour un text",
+        //   text.valuesByMode,
+        //   "but also",
+        //   Object.values(text.valuesByMode)[0]
+        // );
         const textData = {
             type: "TEXT",
             name: text.name,

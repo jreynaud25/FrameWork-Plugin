@@ -54,6 +54,8 @@ const processDesignChange = async (design: Design): Promise<void> => {
     if (design.hasChanged) {
       console.log("Change detected!", design);
       await makeChangement(design);
+    } else {
+      console.log("No change detected");
     }
   } catch (error) {
     console.error("An error occurred during processDesignChange:", error);
@@ -115,13 +117,13 @@ const editVariables = (variables: Array<string>): void => {
   const localStringVariables = figma.variables.getLocalVariables("STRING"); // filters local variables by the 'STRING' type
 
   localStringVariables.map((e, index) => {
-    console.log("looping through var", e);
-    console.log("the Name", e.name);
+    // console.log("looping through var", e);
+    //console.log("the Name", e.name);
 
     variables.forEach((item) => {
       if (item.name === e.name) {
-        console.log("Bonjour la value dans item ", item.valuesByMode);
-        console.log("Value dans e", e.valuesByMode);
+        // console.log("Bonjour la value dans item ", item.valuesByMode);
+        //console.log("Value dans e", e.valuesByMode);
 
         const newValue: VariableValue = item.valuesByMode;
         e.setValueForMode(localCollections[0].modes[0].modeId, newValue);
@@ -131,29 +133,38 @@ const editVariables = (variables: Array<string>): void => {
 };
 
 // Function to edit a specific img
-const findImgAndReplace = (images): void => {
+const findImgAndReplace = async (images) => {
   console.log("📸salut l'image 📸");
-  images.map((image) => {
-    console.log("Je loop sur les images", image);
 
+  for (const image of images) {
     if (image.hasChanged) {
-      const nodes = figma.currentPage.findAll((n) => n.name === image.name);
+      console.log(image.name, "has changed");
+      console.log("Then I'll do something", image);
 
-      figma.createImageAsync(image.url).then(async (image: Image) => {
-        nodes.map((node) => {
+      const nodes = figma.currentPage.findAll((n) => n.name === image.name);
+      console.log("I found the node", nodes);
+
+      try {
+        const img = await figma.createImageAsync(image.url);
+        nodes.forEach((node) => {
           node.fills = [
             {
               type: "IMAGE",
-              imageHash: image.hash,
-              scaleMode: "FILL",
+              imageHash: img.hash,
+              scaleMode: "FIT",
             },
           ];
         });
-      });
+      } catch (error) {
+        console.error("Error creating image:", error);
+        if (error === "Image is too large") {
+          console.log("image too large");
+        }
+      }
     } else {
-      console.log(image.name, " as not change");
+      console.log(image.name, " has not changed");
     }
-  });
+  }
 };
 
 //Starting the plugin
@@ -304,12 +315,12 @@ const retrieveAllDatas = async (): Promise<void> => {
 
   const textVariables = figma.variables.getLocalVariables("STRING");
   textVariables.forEach((text) => {
-    console.log(
-      "bonjour un text",
-      text.valuesByMode,
-      "but also",
-      Object.values(text.valuesByMode)[0]
-    );
+    // console.log(
+    //   "bonjour un text",
+    //   text.valuesByMode,
+    //   "but also",
+    //   Object.values(text.valuesByMode)[0]
+    // );
     const textData = {
       type: "TEXT",
       name: text.name,
